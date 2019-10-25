@@ -19,6 +19,11 @@ from tkinter import filedialog
 import getpass  # for username
 import hashlib
 
+import base64
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto import Random
+
 str = hashlib.sha3_512(b"hi")
 
 print(str.hexdigest())
@@ -31,10 +36,7 @@ print(dk.hex())
 
 # hashlib.scrypt()
 
-Encryption_Algorithms = [
-    "md5",
-    "sha",
-]
+
 
 def to_seconds(timestr):
     seconds = 0
@@ -67,7 +69,7 @@ def browse_file():
     return 0
 
 
-class Example(Frame):
+class CrypterWindow(Frame):
 
     def __init__(self):
         super().__init__()
@@ -75,8 +77,11 @@ class Example(Frame):
         self.algorithm_select = None
         self.entry1 = None
         self.password_entry = None
+        self.selected_algorithm = tk.StringVar()
         self.password_txt = tk.StringVar()
         self.filename = tk.StringVar()
+        self.Encryption_Algorithms = ["md5", "sha"]
+        self.txt = None
         self.initUI()
 
     def initUI(self):
@@ -109,10 +114,9 @@ class Example(Frame):
         # the constructor syntax is:
         # OptionMenu(master, variable, *values)
 
-        selected_algorithm = tk.StringVar()
-        selected_algorithm.set(Encryption_Algorithms[1])  # default value
-        self.algorithm_select = tk.ttk.Combobox(frame2, width=10, textvariable=selected_algorithm)
-        self.algorithm_select['values'] = tuple(Encryption_Algorithms)
+        self.algorithm_select = tk.ttk.Combobox(frame2, width=10, textvariable=self.selected_algorithm)
+        self.selected_algorithm.set(self.Encryption_Algorithms[1])  # default value
+        self.algorithm_select['values'] = tuple(self.Encryption_Algorithms)
         # combo.grid(column=1, row=0)
         self.algorithm_select.pack(padx=5, pady=5, side=tk.LEFT)
 
@@ -126,8 +130,11 @@ class Example(Frame):
         frame4.pack(fill=BOTH, expand=True)
         # lbl3 = Label(frame4, text="Output", width=6)
         # lbl3.pack(side=LEFT, anchor=N, padx=5, pady=5)
-        txt = Text(frame4)
-        txt.pack(fill=BOTH, pady=5, padx=5, expand=True)
+
+        self.txt = Text(frame4)
+        scr = tk.Scrollbar(frame4, orient=tk.VERTICAL, command=self.txt.yview)
+        self.txt.config(yscrollcommand=scr.set, font=('Arial', 12, 'normal'))
+        self.txt.pack(fill=BOTH, pady=5, padx=5, expand=True)
 
         # btn_decrypt = tk.Button(frame4, text='Save', fg='red', command=browse_file)
         # btn_decrypt.pack(padx=5, pady=5, side=tk.LEFT)
@@ -138,12 +145,58 @@ class Example(Frame):
         print('encrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
+        lines = self.get_lines()
+        # print(lines)
+        passpord = self.password_entry.get()
+        key, source, encode = passpord.encode(), lines.encode(), True
+
+        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+        IV = Random.new().read(AES.block_size)  # generate IV
+        encryptor = AES.new(key, AES.MODE_CBC, IV)
+        padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
+        source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
+        data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
+        out = base64.b64encode(data).decode("utf-8") if encode else data
+
+        self.txt.delete(1.0, tk.END)
+        self.txt.insert(tk.END, out)
         pass
+
+    def get_lines(self):
+        with open(self.filename.get()) as f:
+            line = f.readline()
+            lines = line + "\n"
+            while line:
+                line = f.readline()
+                lines += line + "\n"
+                pass
+            pass
+        return lines
 
     def decrypt(self):
         print('decrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
+
+        lines = self.get_lines()
+        # print(lines)
+        passpord = self.password_entry.get()
+        key, source = passpord.encode(), lines.encode("utf-8")
+
+
+        source = base64.b64decode(source)
+        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
+        IV = source[:AES.block_size]  # extract the IV from the beginning
+        decryptor = AES.new(key, AES.MODE_CBC, IV)
+        data = decryptor.decrypt(source[AES.block_size:])  # decrypt
+        padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
+        if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
+            self.txt.delete(1.0, tk.END)
+            self.txt.insert(tk.END, "Wrong password")
+            raise ValueError("Invalid padding...")
+        out = data[:-padding]  # remove the padding
+        self.txt.delete(1.0, tk.END)
+        self.txt.insert(tk.END, out)
         pass
 
     def browse_file(self):
@@ -153,7 +206,7 @@ class Example(Frame):
         username = getpass.getuser()
         print(username)
         a = filedialog.askopenfilename(initialdir="/home/{}/".format(username), title="Select file",
-                                   filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")), mode='r')
+                                   filetypes=(("Text files", "*.txt"), ("Encrypted files", "*.enc"), ("all files", "*.*")))
         print(a)
         self.filename.set(a)
 
@@ -175,8 +228,8 @@ def donothing():
 
 def main():
     root = Tk()
-    root.geometry("400x400+300+300")
-
+    # root.geometry("400x400+300+300")
+    root.minsize(430, 300)
     menubar = tk.Menu(root)
     filemenu = tk.Menu(menubar, tearoff=0)
     filemenu.add_command(label="New", command=donothing)
@@ -191,7 +244,7 @@ def main():
     helpmenu.add_command(label="About...", command=donothing)
     menubar.add_cascade(label="Help", menu=helpmenu)
 
-    app = Example()
+    app = CrypterWindow()
 
     root.config(menu=menubar)
     root.mainloop()
