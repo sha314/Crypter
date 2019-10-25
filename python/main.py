@@ -82,6 +82,10 @@ class CrypterWindow(Frame):
         self.filename = tk.StringVar()
         self.Encryption_Algorithms = ["md5", "sha"]
         self.txt = None
+        self.modes = ["Encrypt", "Decrypt"]
+        self.selected_mode = tk.StringVar()
+        # self.selected_mode.set(self.modes[0])
+
         self.initUI()
 
     def initUI(self):
@@ -92,7 +96,7 @@ class CrypterWindow(Frame):
         frame1 = Frame(self)
         frame1.pack(fill=X)
 
-        lbl1 = Label(frame1, text="File ", width=10)
+        lbl1 = tk.Label(frame1, text="File ", width=10)
         lbl1.pack(side=LEFT, padx=5, pady=5)
 
         self.entry1 = Entry(frame1, textvariable=self.filename)
@@ -100,6 +104,13 @@ class CrypterWindow(Frame):
 
         btn_browse = tk.Button(frame1, text='Browse', fg='red', command=self.browse_file)
         btn_browse.pack(padx=5, pady=5, side=tk.LEFT)
+
+        mode = tk.Label(frame1, text='Mode', fg='blue')
+        mode.pack(padx=5, pady=5, side=tk.LEFT)
+
+        option_menu = tk.ttk.OptionMenu(frame1, self.selected_mode, self.modes[0], *self.modes)
+        option_menu.pack(padx=5, pady=5, side=tk.LEFT)
+
 
         # monitor frame
         frame2 = Frame(self)
@@ -120,11 +131,8 @@ class CrypterWindow(Frame):
         # combo.grid(column=1, row=0)
         self.algorithm_select.pack(padx=5, pady=5, side=tk.LEFT)
 
-        btn_encrypt = tk.Button(frame2, text='Encrypt', fg='red', command=self.encrypt)
-        btn_encrypt.pack(padx=0, pady=5, side=tk.LEFT)
-
-        btn_decrypt = tk.Button(frame2, text='Decrypt', fg='red', command=self.decrypt)
-        btn_decrypt.pack(padx=0, pady=5, side=tk.LEFT)
+        btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
+        btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
 
         frame4 = Frame(self)
         frame4.pack(fill=BOTH, expand=True)
@@ -141,10 +149,32 @@ class CrypterWindow(Frame):
 
         pass
 
+    def run_cryption(self):
+        current_mode = self.selected_mode.get()
+        print("selected mode ", current_mode)
+        filename = self.filename.get()
+        if filename == "":
+            print("No filename is specified.")
+            return
+        if current_mode == self.modes[0]:
+            self.encrypt()
+            pass
+        elif current_mode == self.modes[1]:
+            self.decrypt()
+            pass
+        else:
+            print("Unknown mode")
+
+
     def encrypt(self):
         print('encrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
+        print("selected mode ", self.selected_mode.get())
+        if self.selected_mode.get() != self.modes[0]:
+            print("Wrong mode is selected")
+            return
+
         lines = self.get_lines()
         # print(lines)
         passpord = self.password_entry.get()
@@ -177,6 +207,10 @@ class CrypterWindow(Frame):
         print('decrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
+        print("selected mode ", self.selected_mode.get())
+        if self.selected_mode.get() != self.modes[1]:
+            print("Wrong mode is selected")
+            return
 
         lines = self.get_lines()
         # print(lines)
@@ -202,7 +236,7 @@ class CrypterWindow(Frame):
     def browse_file(self):
         print('browse file')
         print(self.entry1.get())
-
+        print("selected mode ", self.selected_mode.get())
         username = getpass.getuser()
         print(username)
         a = filedialog.askopenfilename(initialdir="/home/{}/".format(username), title="Select file",
