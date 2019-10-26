@@ -25,11 +25,14 @@ from Crypto.Hash import SHA256
 from Crypto import Random
 import glob
 import os
+from pathlib import Path
+
 
 def donothing():
    x = 0
 
    pass
+
 
 class CrypterWindow:
     """
@@ -41,20 +44,8 @@ class CrypterWindow:
         self.root = Tk()
         # root.geometry("400x400+300+300")
         self.root.minsize(500, 350)
-        menubar = tk.Menu(self.root)
-        filemenu = tk.Menu(menubar, tearoff=0)
-        filemenu.add_command(label="New", command=donothing)
-        filemenu.add_command(label="Open", command=donothing)
-        filemenu.add_command(label="Save", command=donothing)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.root.quit)
-        menubar.add_cascade(label="File", menu=filemenu)
-
-        helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label="Help Index", command=donothing)
-        helpmenu.add_command(label="About...", command=donothing)
-        menubar.add_cascade(label="Help", menu=helpmenu)
-        self.root.config(menu=menubar)
+        self.root.title("Crypter")
+        self.set_menubar()
 
         self.algorithm_select = None
         self.entry1 = None
@@ -69,7 +60,10 @@ class CrypterWindow:
         # self.selected_mode.set(self.modes[0])
         self.files_only = None
         self.itemsforlistbox = None
-
+        self.mylistbox = None
+        home = os.path.expanduser("~")
+        # home = str(Path.home()) # for python 3.5+
+        self.current_dir = home
         self.initUI()
         self.root.mainloop()
 
@@ -91,7 +85,7 @@ class CrypterWindow:
         self.entry1 = Entry(frame1, textvariable=self.filename)
         self.entry1.pack(fill=X, padx=5, pady=5)
 
-        btn_browse = tk.Button(frame1, text='Browse', fg='red', command=self.browse_file)
+        btn_browse = tk.Button(frame1, text='Browse', fg='red', command=self.browse_dir)
         btn_browse.pack(padx=5, pady=5, side=tk.RIGHT)
 
         # monitor frame
@@ -130,7 +124,7 @@ class CrypterWindow:
         lbl3 = Label(frame_in_data, text="Input", width=6, font=('Arial', 12, 'bold'))
         lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
 
-        self.txt_in = tk.Text(frame_in_data)
+        self.txt_in = tk.Text(frame_in_data, width=50)
         scra = tk.Scrollbar(frame_in_data, orient=tk.VERTICAL, command=self.txt_in.yview)
         self.txt_in.config(yscrollcommand=scra.set, font=('Arial', 12, 'normal'))
         self.txt_in.pack(pady=5, padx=5, expand=True, side=tk.LEFT)
@@ -140,7 +134,7 @@ class CrypterWindow:
         lbl3 = Label(frame_out_data, text="Output", width=6, font=('Arial', 12, 'bold'))
         lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
 
-        self.txt_out = tk.Text(frame_out_data)
+        self.txt_out = tk.Text(frame_out_data,  width=50)
         scrb = tk.Scrollbar(frame_out_data, orient=tk.VERTICAL, command=self.txt_in.yview)
         self.txt_out.config(yscrollcommand=scrb.set, font=('Arial', 12, 'normal'))
         self.txt_out.pack(pady=5, padx=5, expand=True, side=tk.RIGHT)
@@ -151,20 +145,20 @@ class CrypterWindow:
         pass
 
     def set_menubar(self):
-        menubar = tk.Menu(self)
+        menubar = tk.Menu(self.root)
         filemenu = tk.Menu(menubar, tearoff=0)
         filemenu.add_command(label="New", command=donothing)
-        filemenu.add_command(label="Open", command=donothing)
+        filemenu.add_command(label="Open", command=self.browse_dir)
         filemenu.add_command(label="Save", command=donothing)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.quit)
+        filemenu.add_command(label="Exit", command=self.root.quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
         helpmenu = tk.Menu(menubar, tearoff=0)
         helpmenu.add_command(label="Help Index", command=donothing)
         helpmenu.add_command(label="About...", command=donothing)
         menubar.add_cascade(label="Help", menu=helpmenu)
-        self.config(menu=menubar)
+        self.root.config(menu=menubar)
 
         pass
 
@@ -175,31 +169,30 @@ class CrypterWindow:
         lbl1 = tk.Label(sidebar, text="Files", font=('times', 12))
         lbl1.pack(fill=tk.X, side=tk.TOP)
 
-        username = getpass.getuser()
-        location = "/home/{}".format(username)
-        # files = os.listdir(location)
-        files_all = glob.glob(location + "/*")
-        # itemsforlistbox=['one','two','three','four','five','six','seven']
-        # list only files in the given directory
-        self.files_only = [f for f in files_all if os.path.isfile(f)]
-        print(self.files_only)
-        self.itemsforlistbox = [f.split('/')[-1] for f in self.files_only]
-
         scrollx = tk.Scrollbar(sidebar, orient=tk.HORIZONTAL)
         scrollx.pack(side=tk.BOTTOM, fill=tk.X)
 
         scrolly = tk.Scrollbar(sidebar, orient=tk.VERTICAL)
         scrolly.pack(side=tk.RIGHT, fill=tk.Y)
 
-        mylistbox = tk.Listbox(sidebar, width=20, font=('times', 12), yscrollcommand=scrolly.set,
+        self.mylistbox = tk.Listbox(sidebar, width=20, font=('times', 12), yscrollcommand=scrolly.set,
                                xscrollcommand=scrollx.set)
-        mylistbox.bind('<<ListboxSelect>>', self.select_from_sidebar)
-        mylistbox.pack(fill=tk.Y, expand=True)
+        self.mylistbox.bind('<<ListboxSelect>>', self.select_from_sidebar)
+        self.mylistbox.pack(fill=tk.Y, expand=True)
         # mylistbox.place(x=32,y=90)
 
-        for items in self.itemsforlistbox:
-            mylistbox.insert(tk.END, items)
+        self.reload_sidebar()
         pass
+
+    def get_filename_list(self):
+        # files = os.listdir(location)
+        files_all = glob.glob(self.current_dir + "/*")
+        # itemsforlistbox=['one','two','three','four','five','six','seven']
+        # list only files in the given directory
+        self.files_only = [f for f in files_all if os.path.isfile(f)]
+        print(self.files_only)
+        filenames = [f.split('/')[-1] for f in self.files_only]
+        return filenames
 
     def select_from_sidebar(self, event):
         widget = event.widget
@@ -308,13 +301,29 @@ class CrypterWindow:
         print('browse file')
         print(self.entry1.get())
         print("selected mode ", self.selected_mode.get())
-        username = getpass.getuser()
-        print(username)
-        a = filedialog.askopenfilename(initialdir="/home/{}/".format(username), title="Select file",
+        a = filedialog.askopenfilename(initialdir=self.current_dir, title="Select Folder",
                                    filetypes=(("Text files", "*.txt"), ("Encrypted files", "*.enc"), ("all files", "*.*")))
         print(a)
         self.filename.set(a)
 
+        pass
+
+    def browse_dir(self):
+        print('browse file')
+        print(self.entry1.get())
+        print("selected mode ", self.selected_mode.get())
+        a = filedialog.askdirectory(initialdir=self.current_dir, title="Select Folder")
+        print(a)
+        self.current_dir = a
+        # self.filename.set(a)
+        self.reload_sidebar()
+        pass
+
+    def reload_sidebar(self):
+        self.mylistbox.delete(0, tk.END)
+        self.itemsforlistbox = self.get_filename_list()
+        for items in self.itemsforlistbox:
+            self.mylistbox.insert(tk.END, items)
         pass
 
     def save_file(self):
