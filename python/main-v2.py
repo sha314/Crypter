@@ -23,44 +23,8 @@ import base64
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
-
-str = hashlib.sha3_512(b"hi")
-
-print(str.hexdigest())
-
-
-dk = hashlib.pbkdf2_hmac('sha256', b'password', b'salt', 100000)
-print(dk.hex())
-
-
-
-# hashlib.scrypt()
-
-
-
-def to_seconds(timestr):
-    seconds = 0
-    for part in timestr.split(':'):
-        seconds = seconds * 60 + int(part)
-    return seconds
-
-
-def seconds_to_hhmmss(seconds):
-    r = seconds
-    timestamp = ""
-
-    hr = int(r / 3600)
-    r = r % 3600
-    print(r)
-    print(hr)
-
-    minute = int(r / 60)
-    r = r % 60
-    print(r)
-    print(minute)
-
-    return "{:2}:{:2}:{:2}".format(hr, minute, r)
-
+import glob
+import os
 
 def browse_file():
     print("button liecked : browse_file")
@@ -81,22 +45,26 @@ class CrypterWindow(Frame):
         self.password_txt = tk.StringVar()
         self.filename = tk.StringVar()
         self.Encryption_Algorithms = ["md5", "sha"]
-        self.txt = None
+        self.txt_in = None
         self.modes = ["Encrypt", "Decrypt"]
         self.selected_mode = tk.StringVar()
         # self.selected_mode.set(self.modes[0])
-
+        self.files_only = None
+        self.itemsforlistbox = None
         self.initUI()
 
     def initUI(self):
         self.master.title("Crypter")
         self.pack(fill=BOTH, expand=True)
 
-        # Add timer frame
+        # sidebar
+        self.set_sidebar()
+
+        # Add next frame
         frame1 = Frame(self)
         frame1.pack(fill=X)
 
-        lbl1 = tk.Label(frame1, text="File ", width=10)
+        lbl1 = tk.Label(frame1, text="Location ", width=10)
         lbl1.pack(side=LEFT, padx=5, pady=5)
 
         self.entry1 = Entry(frame1, textvariable=self.filename)
@@ -133,19 +101,78 @@ class CrypterWindow(Frame):
         btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
         btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
 
-        frame4 = Frame(self)
-        frame4.pack(fill=BOTH, expand=True)
-        # lbl3 = Label(frame4, text="Output", width=6)
-        # lbl3.pack(side=LEFT, anchor=N, padx=5, pady=5)
+        frame_in_out_data = Frame(self)
+        frame_in_out_data.pack(fill=BOTH, expand=True)
 
-        self.txt = Text(frame4)
-        scr = tk.Scrollbar(frame4, orient=tk.VERTICAL, command=self.txt.yview)
-        self.txt.config(yscrollcommand=scr.set, font=('Arial', 12, 'normal'))
-        self.txt.pack(fill=BOTH, pady=5, padx=5, expand=True)
+        frame_in_data = Frame(frame_in_out_data)
+        frame_in_data.pack(fill=tk.Y, expand=True, side=tk.LEFT)
+        lbl3 = Label(frame_in_data, text="Input", width=6, font=('Arial', 12, 'bold'))
+        lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
 
-        # btn_decrypt = tk.Button(frame4, text='Save', fg='red', command=browse_file)
+        self.txt_in = Text(frame_in_data)
+        scra = tk.Scrollbar(frame_in_data, orient=tk.VERTICAL, command=self.txt_in.yview)
+        self.txt_in.config(yscrollcommand=scra.set, font=('Arial', 12, 'normal'))
+        self.txt_in.pack(pady=5, padx=5, expand=True, side=tk.LEFT)
+
+        frame_out_data = Frame(frame_in_out_data)
+        frame_out_data.pack(fill=tk.Y, expand=True, side=tk.RIGHT)
+        lbl3 = Label(frame_out_data, text="Output", width=6, font=('Arial', 12, 'bold'))
+        lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
+
+        self.txt_out = Text(frame_out_data)
+        scrb = tk.Scrollbar(frame_out_data, orient=tk.VERTICAL, command=self.txt_in.yview)
+        self.txt_out.config(yscrollcommand=scrb.set, font=('Arial', 12, 'normal'))
+        self.txt_out.pack(pady=5, padx=5, expand=True, side=tk.RIGHT)
+
+        # btn_decrypt = tk.Button(frame_in_out_data, text='Save', fg='red', command=browse_file)
         # btn_decrypt.pack(padx=5, pady=5, side=tk.LEFT)
 
+        pass
+
+    def set_menubar(self):
+
+        pass
+
+    def set_sidebar(self):
+        sidebar = tk.Frame(self, width=200, bg='white', height=500, relief='sunken', borderwidth=2)
+        sidebar.pack(expand=True, fill='y', side='left', anchor='nw')
+
+        lbl1 = tk.Label(sidebar, text="Files", font=('times', 12))
+        lbl1.pack(fill=tk.X, side=tk.TOP)
+
+        username = getpass.getuser()
+        location = "/home/{}".format(username)
+        # files = os.listdir(location)
+        files_all = glob.glob(location + "/*")
+        # itemsforlistbox=['one','two','three','four','five','six','seven']
+        # list only files in the given directory
+        self.files_only = [f for f in files_all if os.path.isfile(f)]
+        print(self.files_only)
+        self.itemsforlistbox = [f.split('/')[-1] for f in self.files_only]
+
+        scrollx = tk.Scrollbar(sidebar, orient=tk.HORIZONTAL)
+        scrollx.pack(side=tk.BOTTOM, fill=tk.X)
+
+        scrolly = tk.Scrollbar(sidebar, orient=tk.VERTICAL)
+        scrolly.pack(side=tk.RIGHT, fill=tk.Y)
+
+        mylistbox = tk.Listbox(sidebar, width=20, font=('times', 12), yscrollcommand=scrolly.set,
+                               xscrollcommand=scrollx.set)
+        mylistbox.bind('<<ListboxSelect>>', self.select_from_sidebar)
+        mylistbox.pack(fill=tk.Y, expand=True)
+        # mylistbox.place(x=32,y=90)
+
+        for items in self.itemsforlistbox:
+            mylistbox.insert(tk.END, items)
+        pass
+
+    def select_from_sidebar(self, event):
+        widget = event.widget
+        selection = widget.curselection()
+        print(selection)
+        picked = widget.get(selection[0])
+        print(picked)
+        self.filename.set(self.files_only[selection[0]])
         pass
 
     def run_cryption(self):
@@ -186,8 +213,8 @@ class CrypterWindow(Frame):
         data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
         out = base64.b64encode(data).decode("utf-8") if encode else data
 
-        self.txt.delete(1.0, tk.END)
-        self.txt.insert(tk.END, out)
+        self.txt_in.delete(1.0, tk.END)
+        self.txt_in.insert(tk.END, out)
         pass
 
     def get_lines(self):
@@ -223,12 +250,12 @@ class CrypterWindow(Frame):
         data = decryptor.decrypt(source[AES.block_size:])  # decrypt
         padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
         if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
-            self.txt.delete(1.0, tk.END)
-            self.txt.insert(tk.END, "Wrong password")
+            self.txt_in.delete(1.0, tk.END)
+            self.txt_in.insert(tk.END, "Wrong password")
             raise ValueError("Invalid padding...")
         out = data[:-padding]  # remove the padding
-        self.txt.delete(1.0, tk.END)
-        self.txt.insert(tk.END, out)
+        self.txt_in.delete(1.0, tk.END)
+        self.txt_in.insert(tk.END, out)
         pass
 
     def browse_file(self):
