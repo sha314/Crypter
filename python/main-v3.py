@@ -209,6 +209,11 @@ class CrypterWindow:
         picked = widget.get(selection[0])
         print(picked)
         self.filename.set(self.files_only[selection[0]])
+
+        # show the content in the input panel
+        lines = self.get_lines_from_file()
+        self.show_in_input(lines)
+        self.show_in_output("")
         pass
 
     def run_cryption(self):
@@ -256,14 +261,7 @@ class CrypterWindow:
 
     def get_lines(self):
         try:
-            with open(self.filename.get()) as f:
-                line = f.readline()
-                lines = line + "\n"
-                while line:
-                    line = f.readline()
-                    lines += line + "\n"
-                    pass
-                pass
+            lines = self.get_lines_from_file()
         except FileNotFoundError as e:
             lines = self.load_from_input()
             print(e)
@@ -273,6 +271,17 @@ class CrypterWindow:
             print("No data found")
             return
 
+        return lines
+
+    def get_lines_from_file(self):
+        with open(self.filename.get()) as f:
+            line = f.readline()
+            lines = line + "\n"
+            while line:
+                line = f.readline()
+                lines += line + "\n"
+                pass
+            pass
         return lines
 
     def decrypt(self, lines):
