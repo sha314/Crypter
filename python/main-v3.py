@@ -149,14 +149,14 @@ class CrypterWindow:
         filemenu = tk.Menu(menubar, tearoff=0)
         filemenu.add_command(label="New", command=donothing)
         filemenu.add_command(label="Open", command=self.browse_dir)
-        filemenu.add_command(label="Save", command=donothing)
+        filemenu.add_command(label="Save", command=self.save_file)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.root.quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
         helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label="Help Index", command=donothing)
-        helpmenu.add_command(label="About...", command=donothing)
+        helpmenu.add_command(label="Help Index", command=self.view_help)
+        helpmenu.add_command(label="About...", command=self.view_about)
         menubar.add_cascade(label="Help", menu=helpmenu)
         self.root.config(menu=menubar)
 
@@ -182,6 +182,14 @@ class CrypterWindow:
         # mylistbox.place(x=32,y=90)
 
         self.reload_sidebar()
+        pass
+
+    def view_help(self):
+
+        pass
+
+    def view_about(self):
+
         pass
 
     def get_filename_list(self):
@@ -297,15 +305,24 @@ class CrypterWindow:
         # self.txt_in.insert(tk.END, out)
         pass
 
+    def read_file(self):
+        print('browse file')
+        print(self.entry1.get())
+        print("selected mode ", self.selected_mode.get())
+        mask = (("Text files", "*.txt"), ("Encrypted files", "*.enc"), ("all files", "*.*"))
+        text = filedialog.askopenfile(initialdir=self.current_dir, title="Select Folder", filetypes=mask, mode='r')
+        if text is not None:
+            print(text.readlines())
+        pass
+
     def browse_file(self):
         print('browse file')
         print(self.entry1.get())
         print("selected mode ", self.selected_mode.get())
-        a = filedialog.askopenfilename(initialdir=self.current_dir, title="Select Folder",
-                                   filetypes=(("Text files", "*.txt"), ("Encrypted files", "*.enc"), ("all files", "*.*")))
+        mask = (("Text files", "*.txt"), ("Encrypted files", "*.enc"), ("all files", "*.*"))
+        a = filedialog.askopenfilename(initialdir=self.current_dir, title="Select Folder", filetypes=mask, mode='r')
         print(a)
         self.filename.set(a)
-
         pass
 
     def browse_dir(self):
@@ -327,11 +344,10 @@ class CrypterWindow:
         pass
 
     def save_file(self):
-        username = getpass.getuser()
-        print(username)
-        a = filedialog.asksaveasfilename(initialdir="/home/{}/".format(username), title="Select file",
-                                     filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
-        print(a)
+        name = filedialog.asksaveasfile(initialdir=self.current_dir, mode='w', defaultextension=".txt")
+        text2save = str(self.txt_out.get(0.0, tk.END))
+        name.write(text2save)
+        name.close()
         pass
 
     def load_from_input(self):
