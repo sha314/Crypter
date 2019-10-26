@@ -26,15 +26,18 @@ from Crypto import Random
 import glob
 import os
 
-def browse_file():
-    print("button liecked : browse_file")
+def donothing():
+   x = 0
 
+   pass
 
-    return 0
+class CrypterWindow:
+    """
+    Crypter Main Window
 
-
-class MainWindow:
+    """
     def __init__(self):
+        # super().__init__()
         self.root = Tk()
         # root.geometry("400x400+300+300")
         self.root.minsize(500, 350)
@@ -53,17 +56,6 @@ class MainWindow:
         menubar.add_cascade(label="Help", menu=helpmenu)
         self.root.config(menu=menubar)
 
-        app = CrypterWindow()
-
-        self.root.mainloop()
-        pass
-
-
-class CrypterWindow(Frame):
-
-    def __init__(self):
-        super().__init__()
-
         self.algorithm_select = None
         self.entry1 = None
         self.password_entry = None
@@ -77,18 +69,20 @@ class CrypterWindow(Frame):
         # self.selected_mode.set(self.modes[0])
         self.files_only = None
         self.itemsforlistbox = None
+
         self.initUI()
+        self.root.mainloop()
 
     def initUI(self):
-        self.master.title("Crypter")
-        self.pack(fill=BOTH, expand=True)
+        # self.master.title("Crypter")
+        # self.pack(fill=BOTH, expand=True)
 
         # self.set_menubar()
         # sidebar
         self.set_sidebar()
 
         # Add next frame
-        frame1 = Frame(self)
+        frame1 = Frame(self.root)
         frame1.pack(fill=X)
 
         lbl1 = tk.Label(frame1, text="Location ", width=10)
@@ -101,7 +95,7 @@ class CrypterWindow(Frame):
         btn_browse.pack(padx=5, pady=5, side=tk.RIGHT)
 
         # monitor frame
-        frame2 = Frame(self)
+        frame2 = Frame(self.root)
         frame2.pack(fill=X)
 
         password = Label(frame2, text="Password", width=10)
@@ -128,7 +122,7 @@ class CrypterWindow(Frame):
         btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
         btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
 
-        frame_in_out_data = Frame(self)
+        frame_in_out_data = Frame(self.root)
         frame_in_out_data.pack(fill=BOTH, expand=True)
 
         frame_in_data = Frame(frame_in_out_data)
@@ -175,7 +169,7 @@ class CrypterWindow(Frame):
         pass
 
     def set_sidebar(self):
-        sidebar = tk.Frame(self, width=200, bg='white', height=500, relief='sunken', borderwidth=2)
+        sidebar = tk.Frame(self.root, width=200, bg='white', height=500, relief='sunken', borderwidth=2)
         sidebar.pack(expand=True, fill='y', side='left', anchor='nw')
 
         lbl1 = tk.Label(sidebar, text="Files", font=('times', 12))
@@ -242,6 +236,7 @@ class CrypterWindow(Frame):
             return
 
         lines = self.get_lines()
+        self.show_in_input(lines)
         # print(lines)
         passpord = self.password_entry.get()
         key, source, encode = passpord.encode(), lines.encode(), True
@@ -254,8 +249,9 @@ class CrypterWindow(Frame):
         data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
         out = base64.b64encode(data).decode("utf-8") if encode else data
 
-        self.txt_in.delete(1.0, tk.END)
-        self.txt_in.insert(tk.END, out)
+        self.show_in_output(out)
+        # self.txt_in.delete(1.0, tk.END)
+        # self.txt_in.insert(tk.END, out)
         pass
 
     def get_lines(self):
@@ -279,10 +275,10 @@ class CrypterWindow(Frame):
             return
 
         lines = self.get_lines()
+        self.show_in_input(lines)
         # print(lines)
         passpord = self.password_entry.get()
         key, source = passpord.encode(), lines.encode("utf-8")
-
 
         source = base64.b64decode(source)
         key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
@@ -291,12 +287,14 @@ class CrypterWindow(Frame):
         data = decryptor.decrypt(source[AES.block_size:])  # decrypt
         padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
         if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
-            self.txt_in.delete(1.0, tk.END)
-            self.txt_in.insert(tk.END, "Wrong password")
+            self.show_in_output("Wrong password")
+            # self.txt_in.delete(1.0, tk.END)
+            # self.txt_in.insert(tk.END, )
             raise ValueError("Invalid padding...")
         out = data[:-padding]  # remove the padding
-        self.txt_in.delete(1.0, tk.END)
-        self.txt_in.insert(tk.END, out)
+        self.show_in_output(out)
+        # self.txt_in.delete(1.0, tk.END)
+        # self.txt_in.insert(tk.END, out)
         pass
 
     def browse_file(self):
@@ -320,37 +318,18 @@ class CrypterWindow(Frame):
         print(a)
         pass
 
-def donothing():
-   x = 0
+    def show_in_input(self, lines):
+        self.txt_in.delete(1.0, tk.END)
+        self.txt_in.insert(tk.END, lines)
+        pass
 
-   pass
-
+    def show_in_output(self, lines):
+        self.txt_out.delete(1.0, tk.END)
+        self.txt_out.insert(tk.END, lines)
+        pass
 
 def main():
-    root = Tk()
-    # root.geometry("400x400+300+300")
-    root.minsize(500, 350)
-    menubar = tk.Menu(root)
-    filemenu = tk.Menu(menubar, tearoff=0)
-    filemenu.add_command(label="New", command=donothing)
-    filemenu.add_command(label="Open", command=donothing)
-    filemenu.add_command(label="Save", command=donothing)
-    filemenu.add_separator()
-    filemenu.add_command(label="Exit", command=root.quit)
-    menubar.add_cascade(label="File", menu=filemenu)
-
-    helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help Index", command=donothing)
-    helpmenu.add_command(label="About...", command=donothing)
-    menubar.add_cascade(label="Help", menu=helpmenu)
-    root.config(menu=menubar)
-
     app = CrypterWindow()
-
-
-    root.mainloop()
-
-    # w = MainWindow()
     pass
 
 
