@@ -122,25 +122,25 @@ class CrypterWindow:
         btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
         btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
 
-        frame_in_out_data = Frame(self.root)
+        frame_in_out_data = tk.Frame(self.root)
         frame_in_out_data.pack(fill=BOTH, expand=True)
 
-        frame_in_data = Frame(frame_in_out_data)
+        frame_in_data = tk.Frame(frame_in_out_data)
         frame_in_data.pack(fill=tk.Y, expand=True, side=tk.LEFT)
         lbl3 = Label(frame_in_data, text="Input", width=6, font=('Arial', 12, 'bold'))
         lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
 
-        self.txt_in = Text(frame_in_data)
+        self.txt_in = tk.Text(frame_in_data)
         scra = tk.Scrollbar(frame_in_data, orient=tk.VERTICAL, command=self.txt_in.yview)
         self.txt_in.config(yscrollcommand=scra.set, font=('Arial', 12, 'normal'))
         self.txt_in.pack(pady=5, padx=5, expand=True, side=tk.LEFT)
 
-        frame_out_data = Frame(frame_in_out_data)
+        frame_out_data = tk.Frame(frame_in_out_data)
         frame_out_data.pack(fill=tk.Y, expand=True, side=tk.RIGHT)
         lbl3 = Label(frame_out_data, text="Output", width=6, font=('Arial', 12, 'bold'))
         lbl3.pack(side=tk.TOP, anchor=N, padx=5, pady=5)
 
-        self.txt_out = Text(frame_out_data)
+        self.txt_out = tk.Text(frame_out_data)
         scrb = tk.Scrollbar(frame_out_data, orient=tk.VERTICAL, command=self.txt_in.yview)
         self.txt_out.config(yscrollcommand=scrb.set, font=('Arial', 12, 'normal'))
         self.txt_out.pack(pady=5, padx=5, expand=True, side=tk.RIGHT)
@@ -214,19 +214,19 @@ class CrypterWindow:
         current_mode = self.selected_mode.get()
         print("selected mode ", current_mode)
         filename = self.filename.get()
-        if filename == "":
-            print("No filename is specified.")
-            return
+        lines = self.get_lines()
+        self.show_in_input(lines)
+
         if current_mode == self.modes[0]:
-            self.encrypt()
+            self.encrypt(lines)
             pass
         elif current_mode == self.modes[1]:
-            self.decrypt()
+            self.decrypt(lines)
             pass
         else:
             print("Unknown mode")
 
-    def encrypt(self):
+    def encrypt(self, lines):
         print('encrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
@@ -235,8 +235,7 @@ class CrypterWindow:
             print("Wrong mode is selected")
             return
 
-        lines = self.get_lines()
-        self.show_in_input(lines)
+
         # print(lines)
         passpord = self.password_entry.get()
         key, source, encode = passpord.encode(), lines.encode(), True
@@ -255,17 +254,27 @@ class CrypterWindow:
         pass
 
     def get_lines(self):
-        with open(self.filename.get()) as f:
-            line = f.readline()
-            lines = line + "\n"
-            while line:
+        try:
+            with open(self.filename.get()) as f:
                 line = f.readline()
-                lines += line + "\n"
+                lines = line + "\n"
+                while line:
+                    line = f.readline()
+                    lines += line + "\n"
+                    pass
                 pass
+        except FileNotFoundError as e:
+            lines = self.load_from_input()
+            print(e)
             pass
+
+        if lines == "":
+            print("No data found")
+            return
+
         return lines
 
-    def decrypt(self):
+    def decrypt(self, lines):
         print('decrypt')
         print(self.algorithm_select.get())
         print(self.password_entry.get())
@@ -274,8 +283,6 @@ class CrypterWindow:
             print("Wrong mode is selected")
             return
 
-        lines = self.get_lines()
-        self.show_in_input(lines)
         # print(lines)
         passpord = self.password_entry.get()
         key, source = passpord.encode(), lines.encode("utf-8")
@@ -318,6 +325,12 @@ class CrypterWindow:
         print(a)
         pass
 
+    def load_from_input(self):
+        lines = self.txt_in.get("1.0", 'end-1c')
+        print(lines)
+        return lines
+        pass
+
     def show_in_input(self, lines):
         self.txt_in.delete(1.0, tk.END)
         self.txt_in.insert(tk.END, lines)
@@ -327,6 +340,7 @@ class CrypterWindow:
         self.txt_out.delete(1.0, tk.END)
         self.txt_out.insert(tk.END, lines)
         pass
+
 
 def main():
     app = CrypterWindow()
