@@ -35,6 +35,7 @@ def donothing():
    print("do nothing function")
    pass
 
+
 w, h = 20, 20
 
 
@@ -48,9 +49,26 @@ class Toolbar:
         self.img = self.img.resize((w, h))
         eimg = ImageTk.PhotoImage(self.img)
 
-        exitButton = Button(toolbar, image=eimg, command=self.master.quit)
-        exitButton.image = eimg
+
+        openButton = Button(toolbar, text="Open", command=self.master.quit)
+        # openButton.image = eimg
+        openButton.pack(side=LEFT, padx=2, pady=2)
+
+        saveButton = Button(toolbar, text="Save", command=self.master.quit)
+        # saveButton.image = eimg
+        saveButton.pack(side=LEFT, padx=2, pady=2)
+
+        exitButton = Button(toolbar,text="Exit", command=self.master.quit)
+        # exitButton.image = eimg
         exitButton.pack(side=LEFT, padx=2, pady=2)
+
+        sep1 = tk.ttk.Separator(toolbar)
+        sep1.pack(side="left", fill="y", padx=4, pady=4)
+
+        runButton = Button(toolbar, text="Run", command=self.master.quit)
+        # runButton.image = eimg
+        runButton.pack(side=LEFT, padx=2, pady=2)
+
 
         toolbar.pack(side=TOP, fill=X)
 
@@ -66,8 +84,7 @@ class CrypterWindow:
         # super().__init__()
         self.root = master
         self.root.title("Crypter")
-        self.set_menubar()
-        self.toolbar = Toolbar(self.root)
+
 
         self.algorithm_select = None
         self.entry1 = None
@@ -86,6 +103,9 @@ class CrypterWindow:
         home = os.path.expanduser("~")
         # home = str(Path.home()) # for python 3.5+
         self.current_dir = home
+
+        self.set_menubar()
+        self.set_toolbar()
         self.initUI()
 
 
@@ -107,8 +127,8 @@ class CrypterWindow:
         self.entry1 = Entry(frame1, textvariable=self.filename)
         self.entry1.pack(fill=X, padx=5, pady=5)
 
-        btn_browse = tk.Button(frame1, text='Browse', fg='red', command=self.browse_dir)
-        btn_browse.pack(padx=5, pady=5, side=tk.RIGHT)
+        # btn_browse = tk.Button(frame1, text='Browse', fg='red', command=self.browse_dir)
+        # btn_browse.pack(padx=5, pady=5, side=tk.RIGHT)
 
         # monitor frame
         frame2 = Frame(self.root)
@@ -125,18 +145,18 @@ class CrypterWindow:
         self.algorithm_select['values'] = tuple(self.Encryption_Algorithms)
         # combo.grid(column=1, row=0)
         self.algorithm_select.pack(padx=5, pady=5, side=tk.LEFT)
-
-        mode = tk.Label(frame2, text='Mode', fg='blue')
-        mode.pack(padx=5, pady=5, side=tk.LEFT)
-
-        # the constructor syntax is:
-        # OptionMenu(master, variable, *values)
-
-        option_menu = tk.ttk.OptionMenu(frame2, self.selected_mode, self.modes[0], *self.modes)
-        option_menu.pack(padx=5, pady=5, side=tk.LEFT)
-
-        btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
-        btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
+        #
+        # mode = tk.Label(frame2, text='Mode', fg='blue')
+        # mode.pack(padx=5, pady=5, side=tk.LEFT)
+        #
+        # # the constructor syntax is:
+        # # OptionMenu(master, variable, *values)
+        #
+        # option_menu = tk.ttk.OptionMenu(frame2, self.selected_mode, self.modes[0], *self.modes)
+        # option_menu.pack(padx=5, pady=5, side=tk.LEFT)
+        #
+        # btn_run_cryption = tk.Button(frame2, text='Run', fg='red', command=self.run_cryption)
+        # btn_run_cryption.pack(padx=0, pady=5, side=tk.LEFT)
 
         frame_in_out_data = tk.Frame(self.root)
         frame_in_out_data.pack(fill=BOTH, expand=True)
@@ -182,6 +202,44 @@ class CrypterWindow:
         menubar.add_cascade(label="Help", menu=helpmenu)
         self.root.config(menu=menubar)
 
+        pass
+
+    def set_toolbar(self):
+        toolbar = Frame(self.root)
+
+        # self.img = Image.open("../img/exit.jpg")
+        # self.img = self.img.resize((w, h))
+        # eimg = ImageTk.PhotoImage(self.img)
+
+        openButton = Button(toolbar, text="Open", command=self.browse_dir)
+        # openButton.image = eimg
+        openButton.pack(side=LEFT, padx=2, pady=2)
+
+        saveButton = Button(toolbar, text="Save", command=self.save_file)
+        # saveButton.image = eimg
+        saveButton.pack(side=LEFT, padx=2, pady=2)
+
+        exitButton = Button(toolbar,text="Exit", command=self.root.quit)
+        # exitButton.image = eimg
+        exitButton.pack(side=LEFT, padx=2, pady=2)
+
+        sep1 = tk.ttk.Separator(toolbar)
+        sep1.pack(side="left", fill="y", padx=4, pady=4)
+
+        mode = tk.Label(toolbar, text='Mode', fg='blue')
+        mode.pack(padx=2, pady=2, side=tk.LEFT)
+
+        # the constructor syntax is:
+        # OptionMenu(master, variable, *values)
+
+        option_menu = tk.ttk.OptionMenu(toolbar, self.selected_mode, self.modes[0], *self.modes)
+        option_menu.pack(padx=2, pady=2, side=tk.LEFT)
+
+        btn_run_cryption = tk.Button(toolbar, text='Run', fg='red', command=self.run_cryption)
+        btn_run_cryption.pack(padx=2, pady=2, side=tk.LEFT)
+
+
+        toolbar.pack(side=TOP, fill=X)
         pass
 
     def set_sidebar(self):
@@ -398,12 +456,14 @@ class CrypterWindow:
         pass
 
 
+
+
 def main():
     root = Tk()
     # root.geometry("400x400+300+300")
     root.minsize(500, 350)
-    # app = CrypterWindow(root)
-    a2 = Toolbar(root)
+    app = CrypterWindow(root)
+    # a2 = Toolbar(root)
     root.mainloop()
     pass
 
