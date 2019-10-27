@@ -26,12 +26,35 @@ from Crypto import Random
 import glob
 import os
 from pathlib import Path
+from PIL import Image, ImageTk
+
 
 
 def donothing():
    x = 0
-
+   print("do nothing function")
    pass
+
+w, h = 20, 20
+
+
+class Toolbar:
+    def __init__(self, master):
+        self.master = master
+
+        toolbar = Frame(self.master, relief=tk.RAISED)
+
+        self.img = Image.open("../img/exit.jpg")
+        self.img = self.img.resize((w, h))
+        eimg = ImageTk.PhotoImage(self.img)
+
+        exitButton = Button(toolbar, image=eimg, command=self.master.quit)
+        exitButton.image = eimg
+        exitButton.pack(side=LEFT, padx=2, pady=2)
+
+        toolbar.pack(side=TOP, fill=X)
+
+        pass
 
 
 class CrypterWindow:
@@ -39,13 +62,12 @@ class CrypterWindow:
     Crypter Main Window
 
     """
-    def __init__(self):
+    def __init__(self, master):
         # super().__init__()
-        self.root = Tk()
-        # root.geometry("400x400+300+300")
-        self.root.minsize(500, 350)
+        self.root = master
         self.root.title("Crypter")
         self.set_menubar()
+        self.toolbar = Toolbar(self.root)
 
         self.algorithm_select = None
         self.entry1 = None
@@ -65,7 +87,7 @@ class CrypterWindow:
         # home = str(Path.home()) # for python 3.5+
         self.current_dir = home
         self.initUI()
-        self.root.mainloop()
+
 
     def initUI(self):
         # self.master.title("Crypter")
@@ -377,7 +399,12 @@ class CrypterWindow:
 
 
 def main():
-    app = CrypterWindow()
+    root = Tk()
+    # root.geometry("400x400+300+300")
+    root.minsize(500, 350)
+    # app = CrypterWindow(root)
+    a2 = Toolbar(root)
+    root.mainloop()
     pass
 
 
